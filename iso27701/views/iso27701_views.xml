@@ -1,0 +1,106 @@
+<odoo>
+  <record id="view_iso_pii_type_tree" model="ir.ui.view">
+    <field name="name">iso.pii.type.tree</field>
+    <field name="model">iso.pii.type</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="examples"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_iso_processing_activity_tree" model="ir.ui.view">
+    <field name="name">iso.processing.activity.tree</field>
+    <field name="model">iso.processing.activity</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="lawful_basis"/>
+        <field name="retention_days"/>
+      </tree>
+    </field>
+  </record>
+
+  <menuitem id="menu_iso27701_root" name="ISO27701" sequence="1200"/>
+  <menuitem id="menu_iso_pii" name="PII Registry" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_processing" name="Processing Activities" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_requests" name="DSARs" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_consent" name="Consents" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_dpia" name="DPIAs" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_breach" name="Breaches" parent="menu_iso27701_root"/>
+  <menuitem id="menu_iso_processor" name="Processors" parent="menu_iso27701_root"/>
+
+  <record id="action_iso_pii_types" model="ir.actions.act_window">
+    <field name="name">PII Types</field>
+    <field name="res_model">iso.pii.type</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_iso_processing" model="ir.actions.act_window">
+    <field name="name">Processing Activities</field>
+    <field name="res_model">iso.processing.activity</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_iso_dsr" model="ir.actions.act_window">
+    <field name="name">Data Subject Requests</field>
+    <field name="res_model">iso.dsr</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="view_iso_dsr_form" model="ir.ui.view">
+    <field name="name">iso.dsr.form</field>
+    <field name="model">iso.dsr</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="requestor_name"/>
+            <field name="requestor_email"/>
+            <field name="request_type"/>
+            <field name="activity_id"/>
+            <field name="state" readonly="1"/>
+          </group>
+          <group>
+            <field name="note"/>
+          </group>
+          <footer>
+            <button string="Verify" type="object" name="action_verify" states="draft" class="btn-primary"/>
+            <button string="Open" type="object" name="action_open" states="draft"/>
+            <button string="Done" type="object" name="action_done" states="open"/>
+            <button string="Refuse" type="object" name="action_refuse" states="draft,open"/>
+          </footer>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_iso_consent" model="ir.actions.act_window">
+    <field name="name">Consents</field>
+    <field name="res_model">iso.consent</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_iso_dpia" model="ir.actions.act_window">
+    <field name="name">DPIAs</field>
+    <field name="res_model">iso.dpia</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_iso_breach" model="ir.actions.act_window">
+    <field name="name">Breaches</field>
+    <field name="res_model">iso.breach</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="action_iso_processor" model="ir.actions.act_window">
+    <field name="name">Processors</field>
+    <field name="res_model">iso.processor</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <act_window id="action_open_pii" name="Open PII" res_model="iso.pii.type" view_mode="tree,form"/>
+
+</odoo>

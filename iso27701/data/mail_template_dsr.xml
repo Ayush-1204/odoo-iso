@@ -1,0 +1,15 @@
+
+<odoo>
+  <data noupdate="1">
+    <record id="dsr_verification_template" model="mail.template">
+      <field name="name">DSR Verification</field>
+      <field name="email_from">${(user.email_formatted or 'no-reply')}</field>
+      <field name="email_to">${object.requestor_email or ''}</field>
+      <field name="subject">Verify your data subject request ${object.name}</field>
+      <field name="body_html"><![CDATA[
+        <p>Hi ${object.requestor_name},</p>
+        <p>Please verify your data subject request by using this token: <strong>${object.verification_token}</strong></p>
+      ]]></field>
+    </record>
+  </data>
+</odoo>
