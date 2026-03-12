@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_iso_pii_type,access_iso_pii_type,model_iso_pii_type,,1,1,1,1
+access_iso_processing_activity,access_iso_processing_activity,model_iso_processing_activity,,1,1,1,1
+access_iso_dsr,access_iso_dsr,model_iso_dsr,,1,1,1,1
+access_iso_consent,access_iso_consent,model_iso_consent,,1,1,1,1
+access_iso_dpia,access_iso_dpia,model_iso_dpia,,1,1,1,1
+access_iso_breach,access_iso_breach,model_iso_breach,,1,1,1,1
+access_iso_processor,access_iso_processor,model_iso_processor,,1,1,1,1
