@@ -6,6 +6,7 @@ _logger = logging.getLogger(__name__)
 
 
 class IsoPiiType(models.Model):
+    # Catalog of personal-data categories used by processing activities.
     _name = 'iso.pii.type'
     _description = 'PII Type'
 
@@ -15,6 +16,7 @@ class IsoPiiType(models.Model):
 
 
 class IsoProcessingActivity(models.Model):
+    # Main RoPA-like object representing a processing activity.
     _name = 'iso.processing.activity'
     _description = 'Processing Activity'
 
@@ -27,6 +29,10 @@ class IsoProcessingActivity(models.Model):
         ('legal', 'Legal obligation'),
         ('legitimate', 'Legitimate interests'),
     ], required=True, default='legitimate')
+
+    # Retention configuration fields.
+    # These parameters make one activity responsible for cleanup policy against
+    # a technical model/date field pair.
     retention_days = fields.Integer(help='Retention period (days)')
     controller_id = fields.Many2one('res.users', string='Controller')
     processor_id = fields.Many2one('res.partner', string='Processor')
@@ -37,12 +43,14 @@ class IsoProcessingActivity(models.Model):
 
     @api.constrains('retention_days')
     def _check_retention_positive(self):
+        # Negative retention has no valid legal interpretation in this context.
         for rec in self:
             if rec.retention_days and rec.retention_days < 0:
                 raise models.ValidationError('Retention days must be zero or positive')
 
     @api.constrains('retention_days', 'target_model', 'date_field', 'allow_auto_delete')
     def _check_retention_configuration(self):
+        # Auto-delete is intentionally gated by explicit model/field selection.
         for rec in self:
             if rec.allow_auto_delete and rec.retention_days and not (rec.target_model and rec.date_field):
                 raise models.ValidationError('Auto-delete requires `target_model` and `date_field` to be set')
@@ -52,24 +60,30 @@ class IsoProcessingActivity(models.Model):
         Find records on `target_model` where `date_field` is older than `retention_days` and unlink them.
         Runs only for activities with `allow_auto_delete` enabled.
         """
+        # Pull only policies that are active and meaningful.
         activities = self.search([('allow_auto_delete', '=', True), ('retention_days', '>', 0)])
         for act in activities:
             if not act.target_model or not act.date_field:
                 _logger.warning('Skipping activity %s: missing target_model or date_field', act.id)
                 continue
             try:
+                # Dynamic model resolution allows one retention engine to handle
+                # many business models.
                 model = self.env[act.target_model]
             except Exception:
                 _logger.exception('Invalid target model for activity %s: %s', act.id, act.target_model)
                 continue
             # compute threshold
             try:
+                # Compare against UTC-formatted string to match common Odoo
+                # datetime field storage/query patterns.
                 cutoff = (datetime.utcnow() - timedelta(days=act.retention_days)).strftime('%Y-%m-%d %H:%M:%S')
             except Exception:
                 _logger.exception('Error computing cutoff for activity %s', act.id)
                 continue
             domain = [(act.date_field, '<', cutoff)]
             try:
+                # Bulk-fetch all expired records before unlinking for count/audit.
                 records = model.search(domain)
                 if records:
                     count = len(records)

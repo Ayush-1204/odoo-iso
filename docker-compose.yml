@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:17
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+    volumes:
+      - ./iso27701:/mnt/extra-addons/iso27701
+      - odoo_data:/var/lib/odoo
+    command: >
+      odoo --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo
+           --addons-path=/mnt/extra-addons
+           --test-enable
+           --test-tags=iso27701
+           --stop-after-init
+           --log-level=info
+
+volumes:
+  postgres_data:
+  odoo_data:

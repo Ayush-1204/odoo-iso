@@ -7,18 +7,22 @@ _logger = logging.getLogger(__name__)
 
 
 class IsoDsr(models.Model):
+    # Core record for Data Subject Requests (DSAR/DSR workflow).
     _name = 'iso.dsr'
     _description = 'Data Subject Request'
 
+    # Human-readable identifier generated from sequence when available.
     name = fields.Char(readonly=True, default='New')
     requestor_name = fields.Char(required=True)
     requestor_email = fields.Char()
+    # Request taxonomy aligned with common privacy rights categories.
     request_type = fields.Selection([
         ('access', 'Access'),
         ('erasure', 'Erasure'),
         ('rectification', 'Rectification'),
         ('portability', 'Portability'),
     ], required=True)
+    # Basic lifecycle states for triage and closure.
     state = fields.Selection([
         ('draft', 'Draft'),
         ('open', 'Open'),
@@ -33,14 +37,21 @@ class IsoDsr(models.Model):
 
     @api.model
     def create(self, vals):
+        # Generate sequence-backed identifier; gracefully fallback when sequence
+        # reference is unavailable in lightweight environments.
         vals.setdefault('name', 'DSR/%s' % (self.env['ir.sequence'].next_by_code('iso.dsr') if self.env.ref('iso27701', raise_if_not_found=False) else 'new'))
+
+        # Ensure each request has a verification token for email verification flow.
         if not vals.get('verification_token'):
             vals['verification_token'] = uuid.uuid4().hex
+
         rec = super().create(vals)
+        # Capture creation timestamp explicitly for reporting consistency.
         rec.created_date = fields.Datetime.now()
         return rec
 
     def generate_verification_token(self):
+        # Regenerate token when resending verification or rotating stale token.
         for rec in self:
             rec.verification_token = uuid.uuid4().hex
         return True
@@ -53,6 +64,7 @@ class IsoDsr(models.Model):
         """
         template = False
         try:
+            # Preferred path: use managed template for localization and branding.
             template = self.env.ref('iso27701.dsr_verification_template')
         except Exception:
             template = False
@@ -83,11 +95,13 @@ class IsoDsr(models.Model):
 
     @api.constrains('request_type', 'requestor_email')
     def _check_email_for_certain_requests(self):
+        # Access/portability usually require response delivery to requestor.
         for rec in self:
             if rec.request_type in ('access', 'portability') and not rec.requestor_email:
                 raise ValidationError('Requestor email is required for access and portability requests')
 
     def action_open(self):
+        # State transition helpers are kept small for UI button actions.
         self.state = 'open'
 
     def action_done(self):
@@ -99,6 +113,7 @@ class IsoDsr(models.Model):
     def action_verify(self):
         """Mark request as verified by current user and open it for processing."""
         for rec in self:
+            # Store audit-friendly verification metadata.
             rec.verified_date = fields.Datetime.now()
             rec.verifier_id = self.env.uid
             rec.state = 'open'
